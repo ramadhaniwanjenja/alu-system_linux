@@ -1,10 +1,10 @@
 #include "hnm.h"
 
 /**
- * get_symbol_type32 - determines the symbol type for a 32-bit ELF symbol
- * @symbol: the symbol entry
- * @section_headers: array of section headers
- * Return: symbol type character
+ * get_symbol_type32 - Determines the symbol type for a 32-bit ELF symbol
+ * @symbol: The symbol entry
+ * @section_headers: Array of section headers
+ * Return: Symbol type character
  */
 char get_symbol_type32(Elf32_Sym symbol, Elf32_Shdr *section_headers)
 {
@@ -25,6 +25,7 @@ char get_symbol_type32(Elf32_Sym symbol, Elf32_Shdr *section_headers)
 		return ('A');
 	if (symbol.st_shndx == SHN_COMMON)
 		return ('C');
+
 	if (symbol.st_shndx < SHN_LORESERVE)
 	{
 		section = section_headers[symbol.st_shndx];
@@ -47,6 +48,7 @@ char get_symbol_type32(Elf32_Sym symbol, Elf32_Shdr *section_headers)
 		else
 			symbol_type = 't';
 	}
+
 	if (ELF32_ST_BIND(symbol.st_info) == STB_LOCAL)
 		symbol_type = tolower(symbol_type);
 
@@ -54,23 +56,22 @@ char get_symbol_type32(Elf32_Sym symbol, Elf32_Shdr *section_headers)
 }
 
 /**
- * print_symbol_table32 - prints symbol table for 32-bit ELF file
- * @section_header: pointer to the section header of the symbol table
- * @symbol_table: pointer to the symbol table
- * @string_table: pointer to the string table
- * @section_headers: pointer to all section headers
+ * print_symbol_table32 - Prints symbol table for 32-bit ELF file
+ * @section_header: Pointer to section header of the symbol table
+ * @symbol_table: Pointer to symbol table
+ * @string_table: Pointer to string table
+ * @section_headers: Pointer to all section headers
  */
 void print_symbol_table32(Elf32_Shdr *section_header, Elf32_Sym *symbol_table,
 			  char *string_table, Elf32_Shdr *section_headers)
 {
-	int i;
-	int symbol_count = section_header->sh_size / sizeof(Elf32_Sym);
-	char *symbol_name;
-	char symbol_type;
+	int i, symbol_count = section_header->sh_size / sizeof(Elf32_Sym);
+	char *symbol_name, symbol_type;
 
 	for (i = 0; i < symbol_count; i++)
 	{
 		Elf32_Sym symbol = symbol_table[i];
+
 		symbol_name = string_table + symbol.st_name;
 
 		if (symbol.st_name != 0 &&
@@ -88,10 +89,10 @@ void print_symbol_table32(Elf32_Shdr *section_header, Elf32_Sym *symbol_table,
 }
 
 /**
- * load_section_headers32 - loads ELF section headers from file
- * @file: pointer to the ELF file
+ * load_section_headers32 - Loads ELF section headers from file
+ * @file: Pointer to ELF file
  * @elf_header: ELF header structure
- * Return: pointer to section headers or NULL on failure
+ * Return: Pointer to section headers or NULL on failure
  */
 Elf32_Shdr *load_section_headers32(FILE *file, Elf32_Ehdr elf_header)
 {
@@ -109,15 +110,14 @@ Elf32_Shdr *load_section_headers32(FILE *file, Elf32_Ehdr elf_header)
 }
 
 /**
- * process_elf_file32 - processes a 32-bit ELF file and prints symbols
- * @file_path: path to ELF file
+ * process_elf_file32 - Processes a 32-bit ELF file and prints symbols
+ * @file_path: Path to ELF file
  */
 void process_elf_file32(char *file_path)
 {
 	FILE *file;
 	Elf32_Ehdr elf_header;
-	Elf32_Shdr *section_headers;
-	Elf32_Shdr symtab_header, strtab_header;
+	Elf32_Shdr *section_headers, symtab_header, strtab_header;
 	Elf32_Sym *symbol_table;
 	char *string_table;
 	int i, sym_index = -1, str_index;
@@ -128,6 +128,7 @@ void process_elf_file32(char *file_path)
 		fprintf(stderr, "./hnm: %s: failed to open file\n", file_path);
 		return;
 	}
+
 	fread(&elf_header, sizeof(Elf32_Ehdr), 1, file);
 
 	if (elf_header.e_ident[EI_CLASS] != ELFCLASS32)
@@ -136,6 +137,7 @@ void process_elf_file32(char *file_path)
 		fclose(file);
 		return;
 	}
+
 	section_headers = load_section_headers32(file, elf_header);
 	if (!section_headers)
 	{
@@ -162,17 +164,19 @@ void process_elf_file32(char *file_path)
 
 	symtab_header = section_headers[sym_index];
 	symbol_table = malloc(symtab_header.sh_size);
+
 	fseek(file, symtab_header.sh_offset, SEEK_SET);
 	fread(symbol_table, symtab_header.sh_size, 1, file);
 
 	str_index = symtab_header.sh_link;
 	strtab_header = section_headers[str_index];
 	string_table = malloc(strtab_header.sh_size);
+
 	fseek(file, strtab_header.sh_offset, SEEK_SET);
 	fread(string_table, strtab_header.sh_size, 1, file);
 
-	print_symbol_table32(&symtab_header,
-			     symbol_table, string_table, section_headers);
+	print_symbol_table32(&symtab_header, symbol_table,
+			     string_table, section_headers);
 
 	fclose(file);
 	free(section_headers);
